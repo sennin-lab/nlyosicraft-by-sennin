@@ -1,0 +1,15 @@
+# FILE: render.yaml
+# RESPONSIBILITY: Render Static Site 向けの自動デプロイ・キャッシュ制御設定を定義する。
+# EDIT: 値のみ
+
+services:
+  - type: web
+    name: voxel-survival-bedrock
+    runtime: static
+    buildCommand: ""
+    staticPublishPath: .
+    headers:
+      - path: /*
+        name: Cache-Control
+        value: no-cache
+    # クライアント側ルーティングを使わないためrewrite不要。/* だと /src/*.js まで index.html になり module が壊れる

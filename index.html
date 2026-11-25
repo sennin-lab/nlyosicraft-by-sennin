@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1,user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Voxel Survival">
+  <meta name="theme-color" content="#000000">
+  <meta name="format-detection" content="telephone=no">
+  <title>Voxel Survival</title>
+  <script>
+    window.__errBuf = [];
+    (function () {
+      function pushErr(msg) {
+        if (window.__errBuf.length >= 5) window.__errBuf.shift();
+        window.__errBuf.push(String(msg));
+        var bar = document.getElementById('err-bar');
+        if (!bar) {
+          bar = document.createElement('div');
+          bar.id = 'err-bar';
+          bar.style.cssText = 'position:fixed;left:0;right:0;bottom:0;background:#900;color:#fff;font:12px monospace;padding:4px 8px;z-index:9999;white-space:pre-wrap;pointer-events:none;';
+          (document.body || document.documentElement).appendChild(bar);
+        }
+        bar.textContent = window.__errBuf.join('\n');
+      }
+      window.onerror = function (m, s, l, c) {
+        pushErr(m + ' (' + (s || '').split('/').pop() + ':' + l + ':' + c + ')');
+      };
+      window.addEventListener('unhandledrejection', function (e) {
+        pushErr('Promise: ' + (e.reason && e.reason.message ? e.reason.message : e.reason));
+      });
+    })();
+  </script>
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <canvas id="glcanvas"></canvas>
+  <div id="stick-zone"><div id="stick-base"><div id="stick-knob"></div></div></div>
+  <button id="btn-pause" class="corner-btn" type="button">||</button>
+  <div id="action-pad">
+    <button id="btn-break" class="act" type="button">壊す</button>
+    <div class="act-row">
+      <button id="btn-place" class="act" type="button">置く</button>
+      <button id="btn-jump" class="act act-jump" type="button">跳ぶ</button>
+    </div>
+  </div>
+  <div id="hotbar"></div>
+  <div id="help">左で移動・右をなぞって視点・壊す長押しで破壊・置くで設置</div>
+  <div id="debug-hud" class="hidden"></div>
+  <div id="pause-modal" class="hidden"></div>
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>
