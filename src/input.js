@@ -7,6 +7,7 @@ export const inputState = {
   placeHeld: false, placeTap: false,
   slotRequest: -1, slotDelta: 0,
   toggleDebugRequested: false,
+  bagRequest: false, closeRequest: false,
   logs: []
 };
 
@@ -152,7 +153,9 @@ export function initInput(canvas) {
     if (e.code === 'Space') { e.preventDefault(); if (!e.repeat) inputState.jumpPressed = true; }
     if (/^Digit[1-9]$/.test(e.code)) inputState.slotRequest = Number(e.code.slice(5)) - 1;
     if (e.code === 'KeyF') btn.break = true;
-    if (e.code === 'KeyE') inputState.placeTap = true;
+    if (e.code === 'KeyE' && !e.repeat) inputState.placeTap = true;
+    if (e.code === 'KeyI' && !e.repeat) inputState.bagRequest = true;
+    if (e.code === 'Escape') inputState.closeRequest = true;
     if (['KeyW', 'KeyA', 'KeyS', 'KeyD', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space'].includes(e.code)) {
       keys.add(e.code);
     }
@@ -176,5 +179,6 @@ export function initInput(canvas) {
   window.addEventListener('wheel', (e) => {
     inputState.slotDelta += e.deltaY > 0 ? 1 : -1;
   }, { passive: true });
+  $('btn-bag').addEventListener('pointerdown', (e) => { e.preventDefault(); inputState.bagRequest = true; });
   document.addEventListener('contextmenu', (e) => e.preventDefault());
 }

@@ -38,6 +38,7 @@ uniform sampler2D uAtlas;
 uniform vec3 uFogColor;
 uniform float uFogStart;
 uniform float uFogEnd;
+uniform float uDaylight;
 
 out vec4 fragColor;
 
@@ -47,7 +48,7 @@ void main() {
   if (alpha < 0.5) discard;
   vec3 n = normalize(vNormal);
   float shade = n.y > 0.5 ? 1.0 : (n.y < -0.5 ? 0.5 : (abs(n.x) > 0.5 ? 0.6 : 0.8));
-  vec3 lit = tex.rgb * shade * vAo;
+  vec3 lit = tex.rgb * shade * vAo * mix(0.22, 1.0, uDaylight);
   float fog = clamp((vDist - uFogStart) / max(uFogEnd - uFogStart, 0.001), 0.0, 1.0);
   fragColor = vec4(mix(lit, uFogColor, fog), alpha);
 }`;
@@ -78,6 +79,7 @@ export function createMainShader(gl) {
     uAtlas: gl.getUniformLocation(prog, 'uAtlas'),
     uFogColor: gl.getUniformLocation(prog, 'uFogColor'),
     uFogStart: gl.getUniformLocation(prog, 'uFogStart'),
-    uFogEnd: gl.getUniformLocation(prog, 'uFogEnd')
+    uFogEnd: gl.getUniformLocation(prog, 'uFogEnd'),
+    uDaylight: gl.getUniformLocation(prog, 'uDaylight')
   };
 }

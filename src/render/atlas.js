@@ -6,9 +6,20 @@ const TILE_NAMES = [
   'sandstone_top', 'sandstone_side', 'log_top', 'oak_side', 'planks', 'leaves',
   'ore_coal', 'ore_iron', 'ore_gold', 'ore_diamond', 'ore_copper', 'glass',
   'water', 'bedrock', 'short_grass', 'poppy', 'dandelion', 'bricks', 'snow',
-  'cactus_top', 'cactus_side', 'clay', 'obsidian', 'wool', 'ice'
+  'cactus_top', 'cactus_side', 'clay', 'obsidian', 'wool', 'ice',
+  'crafting_top', 'crafting_side', 'furnace_top', 'furnace_side'
 ];
 const TI = Object.fromEntries(TILE_NAMES.map((n, i) => [n, i]));
+
+// 任意のテクスチャ差し替え: ./assets/blocks/<タイル名>.png（16x16推奨）があれば、その絵を使う
+function loadPackTile(name) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = () => resolve(null);
+    img.src = `./assets/blocks/${name}.png`;
+  });
+}
 
 function rng(seed) {
   let s = seed >>> 0;
@@ -175,7 +186,22 @@ const PAINTERS = {
   clay: () => (x, y, n) => jit(H('#a0a7b5'), (n - 0.5) * 16),
   obsidian: () => (x, y, n) => (n > 0.85 ? rgba(H('#3c2a5c')) : jit(H('#15101f'), (n - 0.5) * 10)),
   wool: () => (x, y, n) => jit(H('#ececec'), (n - 0.5) * 14),
-  ice: () => (x, y, n) => jit(H('#8fb4ec'), (n - 0.5) * 16)
+  ice: () => (x, y, n) => jit(H('#8fb4ec'), (n - 0.5) * 16),
+  // 作業台: 板材に格子の刻み目
+  crafting_top: () => (x, y, n) => {
+    if (x === 0 || y === 0 || x === 15 || y === 15 || x === 5 || x === 10 || y === 5 || y === 10) return rgba(H('#4a3218'));
+    return jit(H('#a57e4c'), (n - 0.5) * 16);
+  },
+  crafting_side: () => (x, y, n) => {
+    if (x > 3 && x < 12 && y > 4 && y < 12) return jit(H('#5c4426'), (n - 0.5) * 12);
+    return jit(H('#9a7445'), (n - 0.5) * 16);
+  },
+  // かまど: 石に炉の口
+  furnace_top: () => (x, y, n) => jit(H('#7d7d7d'), (n - 0.5) * 40),
+  furnace_side: () => (x, y, n) => {
+    if (x > 3 && x < 12 && y > 5 && y < 13) return y > 9 ? rgba(H('#ff8a1f')) : rgba(H('#2a2a2a'));
+    return jit(H('#737373'), (n - 0.5) * 40);
+  }
 };
 
 const rep = (n) => [n, n, n];
@@ -207,12 +233,17 @@ const BLOCK_TILES = {
   [I.clay]: rep('clay'),
   [I.obsidian]: rep('obsidian'),
   [I.white_wool]: rep('wool'),
-  [I.ice]: rep('ice')
+  [I.ice]: rep('ice'),
+  [I.crafting_table]: ['crafting_top', 'crafting_side', 'planks'],
+  [I.furnace]: ['furnace_top', 'furnace_side', 'furnace_top'],
+  [I.torch]: rep('planks'),
+  [I.cobblestone_stairs]: rep('cobble'),
+  [I.oak_slab]: rep('planks')
 };
 
 function tileOf(name) { return TI[name] ?? TI.stone; }
 
-export function createAtlas(gl, debugShow = false) {
+export async function createAtlas(gl, debugShow = false) {
   const SIZE = 256;
   const cv = document.createElement('canvas');
   cv.width = cv.height = SIZE;
@@ -233,6 +264,16 @@ export function createAtlas(gl, debugShow = false) {
     }
   });
   cctx.putImageData(img, 0, 0);
+
+  // 差し替え用のPNGがあれば、該当タイルの上に描き直す
+  const packs = await Promise.all(TILE_NAMES.map(loadPackTile));
+  cctx.imageSmoothingEnabled = false;
+  packs.forEach((pimg, t) => {
+    if (!pimg) return;
+    const tx = (t & 15) * 16, ty = (t >> 4) * 16;
+    cctx.clearRect(tx, ty, 16, 16);
+    cctx.drawImage(pimg, tx, ty, 16, 16);
+  });
 
   const tex = gl.createTexture();
   gl.bindTexture(gl.TEXTURE_2D, tex);

@@ -25,8 +25,11 @@ export function initGL(canvas) {
   // 画面のCSSサイズ × 端末ピクセル比 × 解像度係数 で描画バッファを決める
   function resize() {
     const dpr = Math.min(window.devicePixelRatio || 1, CONFIG.MAX_DPR);
-    const w = Math.max(1, Math.round(window.innerWidth * dpr * scale));
-    const h = Math.max(1, Math.round(window.innerHeight * dpr * scale));
+    let f = dpr * scale;
+    const side = Math.max(window.innerWidth, window.innerHeight) * f;
+    if (side > CONFIG.MAX_BUFFER_SIDE) f *= CONFIG.MAX_BUFFER_SIDE / side;
+    const w = Math.max(1, Math.round(window.innerWidth * f));
+    const h = Math.max(1, Math.round(window.innerHeight * f));
     if (canvas.width !== w || canvas.height !== h) {
       canvas.width = w;
       canvas.height = h;
@@ -72,5 +75,31 @@ export function initGL(canvas) {
     };
   }
 
-  return { gl, resize, setScale, getScale, clear, createMesh };
+  // 位置と法線だけの簡易メッシュ（モブの箱モデル用、色はユニフォームで指定）
+  function createSimpleMesh(positions, normals) {
+    const vao = gl.createVertexArray();
+    gl.bindVertexArray(vao);
+    const bufs = [];
+    const bind = (loc, arr) => {
+      const b = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, b);
+      gl.bufferData(gl.ARRAY_BUFFER, arr, gl.STATIC_DRAW);
+      gl.enableVertexAttribArray(loc);
+      gl.vertexAttribPointer(loc, 3, gl.FLOAT, false, 0, 0);
+      bufs.push(b);
+    };
+    bind(0, positions);
+    bind(1, normals);
+    gl.bindVertexArray(null);
+    return {
+      vao,
+      count: positions.length / 3,
+      dispose() {
+        for (const b of bufs) gl.deleteBuffer(b);
+        gl.deleteVertexArray(vao);
+      }
+    };
+  }
+
+  return { gl, resize, setScale, getScale, clear, createMesh, createSimpleMesh };
 }

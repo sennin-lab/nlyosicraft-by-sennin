@@ -13,6 +13,14 @@ export function initPauseUI(btnEl, modalEl, handlers) {
         label: `クリエイティブ: ${handlers.isCreative() ? 'ON' : 'OFF'}`,
         action: () => { handlers.onToggleCreative(); renderMain(); }
       },
+      {
+        label: `画質: ${handlers.qualityLabel()}`,
+        action: () => { handlers.onCycleQuality(); renderMain(); }
+      },
+      {
+        label: `描画距離: ${handlers.renderDistLabel()}`,
+        action: () => { handlers.onCycleRenderDist(); renderMain(); }
+      },
       { label: 'デバッグ表示', action: () => handlers.onToggleDebug() },
       { label: 'バグ報告', action: showReport }
     ];

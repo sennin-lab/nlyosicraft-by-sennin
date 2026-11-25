@@ -38,6 +38,7 @@
   <canvas id="glcanvas"></canvas>
   <div id="stick-zone"><div id="stick-base"><div id="stick-knob"></div></div></div>
   <button id="btn-pause" class="corner-btn" type="button">||</button>
+  <button id="btn-bag" class="corner-btn corner-right" type="button">持ち物</button>
   <div id="action-pad">
     <button id="btn-break" class="act" type="button">壊す</button>
     <div class="act-row">
@@ -46,9 +47,16 @@
     </div>
   </div>
   <div id="hotbar"></div>
-  <div id="help">左で移動・右をなぞって視点・壊す長押しで破壊・置くで設置</div>
+  <div id="inv-modal" class="hidden"></div>
+  <div id="help">左で移動・右をなぞって視点・壊す長押しで破壊と攻撃・置くで設置・持ち物で作る</div>
+  <div id="flash"></div>
+  <div id="death" class="hidden"></div>
   <div id="debug-hud" class="hidden"></div>
   <div id="pause-modal" class="hidden"></div>
+  <div id="rotate-hint" class="hidden">
+    <p>スマホは横向きで遊ぶと操作しやすくなります</p>
+    <button id="rotate-ok" class="menu-btn" type="button">このまま遊ぶ</button>
+  </div>
   <script type="module" src="./src/main.js"></script>
 </body>
 </html>

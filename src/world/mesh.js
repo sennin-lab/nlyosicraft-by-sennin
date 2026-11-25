@@ -96,6 +96,60 @@ function emitCross(B, x, y, z, uv, id, light) {
   }
 }
 
+
+// 箱状の形（松明の棒・ハーフブロック・階段）。セル内座標の箱の組
+const BOX_SHAPES = {
+  torch: [[0.4, 0, 0.4, 0.6, 0.75, 0.6]],
+  slab: [[0, 0, 0, 1, 0.5, 1]],
+  stairs: [[0, 0, 0, 1, 0.5, 1], [0, 0.5, 0.5, 1, 1, 1]]
+};
+
+// 箱の1面を描く（頂点順・UVの取り方は emitFace と同じ）。隣が不透明な境界面は呼び出し側で省く
+function emitBoxFace(B, b, f, base, uv, id, light, alpha) {
+  const a = AX[f], s = SG[f];
+  const t1 = (a + 1) % 3, t2 = (a + 2) % 3;
+  const ti = (id * 6 + f) * 2;
+  const u0 = uv[ti], v0 = uv[ti + 1];
+  const pos = [], uvs = [];
+  for (let k = 0; k < 4; k++) {
+    const c1 = CORN[k][0], c2 = CORN[k][1];
+    const p = base.slice();
+    p[a] += s > 0 ? b[a + 3] : b[a];
+    p[t1] += b[t1] + c1 * (b[t1 + 3] - b[t1]);
+    p[t2] += b[t2] + c2 * (b[t2 + 3] - b[t2]);
+    pos.push(p);
+    let uu, vv;
+    if (a === 1) { uu = c2; vv = c1; }
+    else if (a === 0) { uu = c2; vv = 1 - c1; }
+    else { uu = c1; vv = 1 - c2; }
+    uvs.push([u0 + EPS + uu * (TS - 2 * EPS), v0 + EPS + vv * (TS - 2 * EPS)]);
+  }
+  const order = s > 0 ? [0, 1, 2, 3] : [0, 3, 2, 1];
+  const n = [0, 0, 0];
+  n[a] = s;
+  for (const tri of [[0, 1, 2], [0, 2, 3]]) {
+    for (const k of tri) {
+      const i = order[k];
+      pushV(B, pos[i][0], pos[i][1], pos[i][2], n[0], n[1], n[2], uvs[i][0], uvs[i][1], light, alpha);
+    }
+  }
+}
+
+function emitBoxes(B, pad, lx, ly, lz, ox, oy, oz, boxes, uv, id, light, alpha) {
+  const base = [ox + lx, oy + ly, oz + lz];
+  for (const b of boxes) {
+    for (let f = 0; f < 6; f++) {
+      const a = AX[f], s = SG[f];
+      const atEdge = s > 0 ? b[a + 3] >= 1 : b[a] <= 0;
+      if (atEdge) {
+        const nid = pad[P(lx + (a === 0 ? s : 0), ly + (a === 1 ? s : 0), lz + (a === 2 ? s : 0))];
+        if (OPAQUE[nid]) continue;
+      }
+      emitBoxFace(B, b, f, base, uv, id, light, alpha);
+    }
+  }
+}
+
 // pad: 18^3の隣接込みブロックID, hpad: 18^2の列の最上段, uv: アトラスのUV表
 export function buildSection(pad, hpad, ox, oy, oz, uv) {
   const out = { opaque: mk(), cutout: mk(), trans: mk() };
@@ -110,6 +164,12 @@ export function buildSection(pad, hpad, ox, oy, oz, uv) {
         const B = def.trans === 'trans' ? out.trans : def.trans === 'cutout' ? out.cutout : out.opaque;
         any = true;
 
+        if (BOX_SHAPES[def.shape]) {
+          const alpha = def.trans === 'trans' ? 0.8 : 1.0;
+          emitBoxes(B, pad, lx, ly, lz, ox, oy, oz, BOX_SHAPES[def.shape], uv, id,
+            skyLight(hpad, lx, ly, lz, oy), alpha);
+          continue;
+        }
         if (def.shape === 'cross') {
           emitCross(B, ox + lx, oy + ly, oz + lz, uv, id, skyLight(hpad, lx, ly, lz, oy));
           continue;
